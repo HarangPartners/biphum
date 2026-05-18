@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="비품관리">
+<meta name="mobile-web-app-capable" content="yes">
+<title>매장 비품 관리</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.10.0/dist/tabler-icons.min.css">
+<style>
+  :root{--bg:#ffffff;--bg2:#f5f5f4;--bg3:#eeede8;--text:#1a1a1a;--text2:#6b6b68;--text3:#9b9b97;--border:rgba(0,0,0,0.12);--border2:rgba(0,0,0,0.2);--radius:10px;--radius-lg:14px;--green:#1D9E75;--green-bg:#E1F5EE;--red:#A32D2D;--red-bg:#FCEBEB;--red-border:#F09595;--yellow:#854F0B;}
+  @media(prefers-color-scheme:dark){:root{--bg:#1c1c1e;--bg2:#2c2c2e;--bg3:#3a3a3c;--text:#f0f0ef;--text2:#a0a09e;--text3:#6b6b68;--border:rgba(255,255,255,0.12);--border2:rgba(255,255,255,0.22);--green-bg:#0a3326;--red-bg:#3b1212;--red-border:#7a3030;}}
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  body{font-family:-apple-system,'Apple SD Gothic Neo',BlinkMacSystemFont,sans-serif;background:var(--bg3);color:var(--text);min-height:100dvh}
+  .app{max-width:430px;margin:0 auto;background:var(--bg3);min-height:100dvh;padding-bottom:100px}
+  .header{background:var(--bg);padding:env(safe-area-inset-top,0) 16px 12px;border-bottom:0.5px solid var(--border)}
+  .header-inner{padding-top:16px}
+  .header-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px}
+  .app-title{font-size:22px;font-weight:700;color:var(--text);letter-spacing:-0.5px}
+  .app-title i{font-size:20px;vertical-align:-2px;margin-right:6px}
+  .store-name-btn{font-size:13px;color:var(--text2);display:flex;align-items:center;gap:4px;cursor:pointer;padding:2px 0;border:none;background:none}
+  .header-actions{display:flex;gap:8px;align-items:center}
+  .icon-btn{width:36px;height:36px;border-radius:var(--radius);border:0.5px solid var(--border2);background:var(--bg2);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text2);font-size:18px}
+  .icon-btn.active-sort{background:var(--text);color:var(--bg);border-color:transparent}
+  .primary-btn{height:36px;padding:0 14px;border-radius:var(--radius);border:none;background:var(--text);color:var(--bg);font-size:14px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:4px}
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .stat{background:var(--bg2);border-radius:var(--radius);padding:10px 8px;text-align:center}
+  .stat-num{font-size:24px;font-weight:700;color:var(--text)}
+  .stat-num.warn{color:var(--yellow)}
+  .stat-num.danger{color:var(--red)}
+  .stat-label{font-size:11px;color:var(--text2);margin-top:2px}
+  .sync-dot{width:7px;height:7px;border-radius:50%;background:#ccc;display:inline-block;margin-left:6px;vertical-align:2px}
+  .sync-dot.live{background:var(--green)}
+  .sync-dot.syncing{background:var(--yellow)}
+  .tab-bar{background:var(--bg);border-bottom:0.5px solid var(--border);display:flex;overflow-x:auto;padding:0 12px;scrollbar-width:none}
+  .tab-bar::-webkit-scrollbar{display:none}
+  .tab{padding:11px 10px;font-size:13px;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;flex-shrink:0}
+  .tab.active{color:var(--text);border-bottom-color:var(--text);font-weight:600}
+  .sort-banner{display:none;background:var(--text);color:var(--bg);font-size:13px;font-weight:500;padding:10px 16px;align-items:center;justify-content:space-between}
+  .sort-banner.show{display:flex}
+  .sort-done-btn{font-size:14px;font-weight:700;color:var(--bg);background:none;border:none;cursor:pointer}
+  .search-wrap{padding:10px 12px 4px}
+  .search-inner{position:relative}
+  .search-inner i{position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:16px;color:var(--text3);pointer-events:none}
+  .search-inner input{width:100%;padding:9px 12px 9px 34px;border-radius:var(--radius);border:0.5px solid var(--border);background:var(--bg);color:var(--text);font-size:14px}
+  .list{padding:8px 12px}
+
+  /* 카드 — 상태별 자동 색상 */
+  .card{background:var(--bg);border-radius:var(--radius-lg);border:0.5px solid var(--border);padding:14px;margin-bottom:8px;display:flex;align-items:center;gap:12px;transition:background 0.2s,border-color 0.2s}
+  .card.status-ok{background:var(--bg);border-color:var(--border)}
+  .card.status-low{background:#FFFBEB;border-color:#F5C842}
+  .card.status-critical{background:var(--red-bg);border-color:var(--red-border)}
+  @media(prefers-color-scheme:dark){
+    .card.status-low{background:#2e2710;border-color:#7a6010}
+    .card.status-critical{background:var(--red-bg);border-color:var(--red-border)}
+  }
+
+  .card.dragging{opacity:0.35}
+  .card.drag-over{border:2px dashed var(--text3)}
+  .drag-handle{width:32px;height:40px;display:none;align-items:center;justify-content:center;cursor:grab;color:var(--text3);font-size:22px;flex-shrink:0;touch-action:none;margin-left:-4px}
+  .sort-mode .drag-handle{display:flex}
+  .sort-mode .item-right{display:none}
+  .sort-mode .bar-track{display:none}
+  .cat-icon{width:40px;height:40px;border-radius:var(--radius);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+  .item-info{flex:1;min-width:0}
+  .item-name{font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .item-sub{font-size:12px;color:var(--text2);margin-top:2px}
+  .bar-track{width:100%;height:4px;background:var(--bg3);border-radius:2px;margin-top:6px;overflow:hidden}
+  .bar-fill{height:100%;border-radius:2px;transition:width 0.3s}
+  .item-right{display:flex;flex-direction:column;align-items:flex-end;gap:7px;flex-shrink:0}
+  .qty-row{display:flex;align-items:center;gap:6px}
+  .qty-btn{width:28px;height:28px;border-radius:50%;border:0.5px solid var(--border2);background:var(--bg2);cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;color:var(--text);line-height:1}
+  .qty-num{font-size:16px;font-weight:600;min-width:30px;text-align:center}
+  .qty-num.low{color:var(--yellow)}
+  .qty-num.critical{color:var(--red)}
+  .qty-unit{font-size:11px;font-weight:400;color:var(--text2)}
+
+  /* 자동 상태 뱃지 */
+  .status-badge{display:flex;align-items:center;gap:3px;font-size:12px;padding:4px 9px;border-radius:20px;font-weight:600;white-space:nowrap}
+  .status-badge.ok{background:var(--green-bg);color:var(--green);border:0.5px solid #5DCAA5}
+  .status-badge.low{background:#FFFBEB;color:#854F0B;border:0.5px solid #F5C842}
+  .status-badge.critical{background:var(--red-bg);color:var(--red);border:0.5px solid var(--red-border)}
+  @media(prefers-color-scheme:dark){
+    .status-badge.low{background:#2e2710;color:#F5C842;border-color:#7a6010}
+  }
+
+  .action-row{display:flex;gap:5px;align-items:center}
+  .more-btn{width:28px;height:28px;border-radius:var(--radius);border:0.5px solid var(--border);background:var(--bg2);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text2);font-size:16px}
+  .order-section{padding:8px 12px}
+  .section-title{font-size:13px;font-weight:600;color:var(--text2);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+  .order-card{background:var(--red-bg);border:0.5px solid var(--red-border);border-radius:var(--radius-lg);padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .order-name{font-size:14px;font-weight:600;color:var(--red)}
+  .order-detail{font-size:12px;color:var(--red);opacity:0.75;margin-top:2px}
+  .done-btn{padding:6px 12px;border-radius:20px;border:0.5px solid #5DCAA5;background:var(--green-bg);color:var(--green);font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0}
+  .empty{text-align:center;padding:60px 16px;color:var(--text2)}
+  .empty i{font-size:40px;display:block;margin:0 auto 10px}
+  .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100;align-items:flex-end;justify-content:center}
+  .overlay.open{display:flex}
+  .sheet{background:var(--bg);border-radius:20px 20px 0 0;padding:20px 20px calc(20px + env(safe-area-inset-bottom,0));width:100%;max-width:430px;max-height:90dvh;overflow-y:auto}
+  .sheet-handle{width:36px;height:4px;background:var(--border2);border-radius:2px;margin:0 auto 16px}
+  .sheet-title{font-size:18px;font-weight:700;margin-bottom:18px}
+  .field{margin-bottom:14px}
+  .field label{font-size:13px;color:var(--text2);display:block;margin-bottom:5px;font-weight:500}
+  .field input,.field select{width:100%;padding:11px 12px;border:0.5px solid var(--border2);border-radius:var(--radius);font-size:15px;background:var(--bg2);color:var(--text)}
+  .sheet-btns{display:flex;gap:8px;margin-top:20px}
+  .sheet-btns button{flex:1;padding:13px;border-radius:var(--radius);font-size:15px;font-weight:600;cursor:pointer;border:0.5px solid var(--border2);background:var(--bg2);color:var(--text)}
+  .sheet-btns .primary{background:var(--text);color:var(--bg);border-color:transparent}
+  .sheet-btns .del{background:var(--red-bg);color:var(--red);border-color:var(--red-border)}
+  .cat-item{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border:0.5px solid var(--border);border-radius:var(--radius);margin-bottom:6px}
+  .cat-del-btn{border:none;background:none;cursor:pointer;color:var(--text3);font-size:20px;padding:0 4px;line-height:1}
+  .add-cat-row{display:flex;gap:6px}
+  .add-cat-row input{flex:1;padding:10px 12px;border:0.5px solid var(--border2);border-radius:var(--radius);font-size:14px;background:var(--bg2);color:var(--text)}
+  .add-cat-btn{padding:10px 14px;border-radius:var(--radius);border:0.5px solid var(--border2);background:var(--bg2);color:var(--text);font-size:14px;cursor:pointer;white-space:nowrap}
+  .section-div{font-size:12px;font-weight:600;color:var(--text3);padding:12px 0 6px;letter-spacing:0.5px;text-transform:uppercase}
+  .data-action-btn{width:100%;padding:12px 14px;border-radius:var(--radius);border:0.5px solid var(--border2);background:var(--bg2);color:var(--text);cursor:pointer;font-size:14px;text-align:left;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+  .data-action-btn.red{background:var(--red-bg);color:var(--red);border-color:var(--red-border)}
+  .danger-zone{margin-top:8px;padding:12px;background:var(--red-bg);border:0.5px solid var(--red-border);border-radius:var(--radius);font-size:13px;color:var(--red);display:none}
+  .danger-zone p{margin-bottom:10px}
+  .danger-zone-btns{display:flex;gap:6px}
+  .danger-zone-btns button{flex:1;padding:8px;border-radius:var(--radius);font-size:13px;font-weight:600;cursor:pointer;border:none}
+  .toast{position:fixed;bottom:calc(20px + env(safe-area-inset-bottom,0));left:50%;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:9px 20px;border-radius:20px;font-size:13px;font-weight:500;opacity:0;pointer-events:none;transition:opacity 0.3s;z-index:300;white-space:nowrap}
+  .toast.show{opacity:1}
+  .loading{text-align:center;padding:60px 16px;color:var(--text2)}
+  .loading i{font-size:32px;display:block;margin:0 auto 10px;animation:spin 1s linear infinite}
+  @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+
+  /* 범례 */
+  .legend{display:flex;gap:10px;padding:8px 12px 0;flex-wrap:wrap}
+  .legend-item{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text2)}
+  .legend-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="header-inner">
+      <div class="header-top">
+        <div>
+          <div class="app-title">
+            <i class="ti ti-building-store"></i>비품 관리
+            <span class="sync-dot" id="syncDot"></span>
+          </div>
+          <button class="store-name-btn" onclick="openSheet('storeSheet')">
+            <span id="storeNameLabel">우리 매장</span>
+            <i class="ti ti-pencil" style="font-size:12px"></i>
+          </button>
+        </div>
+        <div class="header-actions">
+          <div class="icon-btn" id="sortBtn" onclick="toggleSortMode()" title="순서 변경"><i class="ti ti-arrows-sort"></i></div>
+          <div class="icon-btn" onclick="openSheet('settingsSheet')" title="설정"><i class="ti ti-settings"></i></div>
+          <button class="primary-btn" onclick="openAddSheet()"><i class="ti ti-plus" style="font-size:16px"></i>추가</button>
+        </div>
+      </div>
+      <div class="stats">
+        <div class="stat"><div class="stat-num" id="totalCount">0</div><div class="stat-label">전체 품목</div></div>
+        <div class="stat"><div class="stat-num warn" id="lowCount">0</div><div class="stat-label">부족 임박</div></div>
+        <div class="stat"><div class="stat-num danger" id="orderCount">0</div><div class="stat-label">주문 필요</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-bar" id="tabBar"></div>
+
+  <div class="sort-banner" id="sortBanner">
+    <span><i class="ti ti-grip-vertical" style="vertical-align:-2px;margin-right:4px"></i>드래그해서 순서를 바꾸세요</span>
+    <button class="sort-done-btn" onclick="toggleSortMode()">완료</button>
+  </div>
+
+  <div class="search-wrap" id="searchWrap">
+    <div class="search-inner">
+      <i class="ti ti-search"></i>
+      <input id="searchInput" type="search" placeholder="비품 검색..." oninput="render()">
+    </div>
+  </div>
+
+  <!-- 범례 -->
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>정상</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#F5C842"></div>부족 임박 (기준의 50%↓)</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div>주문 필요 (기준 이하)</div>
+  </div>
+
+  <div id="listArea"><div class="loading"><i class="ti ti-refresh"></i>불러오는 중...</div></div>
+</div>
+
+<!-- Item Sheet -->
+<div class="overlay" id="itemSheet">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title" id="itemSheetTitle">비품 추가</div>
+    <div class="field"><label>품목명</label><input id="mName" type="text" placeholder="예: 화장지"></div>
+    <div class="field"><label>카테고리</label><select id="mCat"></select></div>
+    <div class="field"><label>현재 수량</label><input id="mQty" type="number" min="0" value="5"></div>
+    <div class="field"><label>최소 기준 수량 (이하면 자동 주문필요)</label><input id="mMin" type="number" min="1" value="3"></div>
+    <div class="field"><label>주문 완료 시 보충 수량</label><input id="mRefill" type="number" min="1" value="10"></div>
+    <div class="field"><label>단위</label><input id="mUnit" type="text" placeholder="개, 롤, 박스" value="개"></div>
+    <div class="sheet-btns">
+      <button onclick="closeSheet('itemSheet')">취소</button>
+      <button id="itemDelBtn" class="del" onclick="deleteItem()" style="display:none">삭제</button>
+      <button class="primary" onclick="saveItem()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- Store Name Sheet -->
+<div class="overlay" id="storeSheet">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">매장 이름 변경</div>
+    <div class="field"><label>매장 이름</label><input id="storeInput" type="text" placeholder="매장 이름"></div>
+    <div class="sheet-btns">
+      <button onclick="closeSheet('storeSheet')">취소</button>
+      <button class="primary" onclick="saveStoreName()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- Settings Sheet -->
+<div class="overlay" id="settingsSheet">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">설정</div>
+    <div class="section-div">카테고리</div>
+    <div id="catList"></div>
+    <div class="add-cat-row" style="margin-bottom:16px">
+      <input id="newCatInput" type="text" placeholder="새 카테고리 이름">
+      <button class="add-cat-btn" onclick="window.addCat()"><i class="ti ti-plus" style="font-size:14px;vertical-align:-2px"></i> 추가</button>
+    </div>
+    <div class="section-div">데이터</div>
+    <button class="data-action-btn red" onclick="window.showResetConfirm()"><i class="ti ti-trash" style="font-size:16px"></i>모든 데이터 초기화</button>
+    <div class="danger-zone" id="resetZone">
+      <p>정말 모든 데이터를 초기화하시겠습니까?<br>이 작업은 되돌릴 수 없습니다.</p>
+      <div class="danger-zone-btns">
+        <button style="background:var(--bg2);color:var(--text)" onclick="window.hideResetConfirm()">취소</button>
+        <button style="background:var(--red);color:#fff" onclick="window.doReset()">초기화</button>
+      </div>
+    </div>
+    <div class="sheet-btns"><button class="primary" onclick="closeSheet('settingsSheet')">닫기</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDsf42N4Bp5Ybfyz-7TxjUA6SD1uW78mUY",
+  authDomain: "biphum-ea7b4.firebaseapp.com",
+  projectId: "biphum-ea7b4",
+  storageBucket: "biphum-ea7b4.firebasestorage.app",
+  messagingSenderId: "317970896160",
+  appId: "1:317970896160:web:22be77e4e72bc37d4fb345"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const STORE_DOC = doc(db, 'store', 'main');
+
+const CAT_ICONS=['ti-wash','ti-pencil','ti-chef-hat','ti-droplet','ti-tag','ti-box','ti-tool','ti-shirt'];
+const CAT_STYLES=[{bg:'#E1F5EE',fg:'#0F6E56'},{bg:'#E6F1FB',fg:'#185FA5'},{bg:'#FAEEDA',fg:'#854F0B'},{bg:'#FBEAF0',fg:'#993556'},{bg:'#EAF3DE',fg:'#3B6D11'},{bg:'#F1EFE8',fg:'#5F5E5A'},{bg:'#EEEDFE',fg:'#534AB7'},{bg:'#FAECE7',fg:'#993C1D'}];
+const DEF_CATS=[{id:'청소',label:'청소',icon:'ti-wash',bg:'#E1F5EE',fg:'#0F6E56'},{id:'사무',label:'사무',icon:'ti-pencil',bg:'#E6F1FB',fg:'#185FA5'},{id:'주방',label:'주방',icon:'ti-chef-hat',bg:'#FAEEDA',fg:'#854F0B'},{id:'위생',label:'위생',icon:'ti-droplet',bg:'#FBEAF0',fg:'#993556'}];
+const DEF_ITEMS=[
+  {id:1,name:'화장지',cat:'위생',qty:2,min:5,unit:'롤',refill:20},
+  {id:2,name:'락스',cat:'청소',qty:1,min:3,unit:'개',refill:6},
+  {id:3,name:'비닐봉투',cat:'주방',qty:8,min:5,unit:'묶음',refill:10},
+  {id:4,name:'볼펜',cat:'사무',qty:3,min:5,unit:'자루',refill:10},
+  {id:5,name:'주방세제',cat:'주방',qty:2,min:3,unit:'개',refill:6},
+  {id:6,name:'마스크',cat:'위생',qty:10,min:10,unit:'개',refill:50},
+  {id:7,name:'A4용지',cat:'사무',qty:5,min:3,unit:'묶음',refill:10},
+  {id:8,name:'걸레',cat:'청소',qty:4,min:3,unit:'장',refill:10},
+];
+
+let S={storeName:'우리 매장',cats:JSON.parse(JSON.stringify(DEF_CATS)),items:JSON.parse(JSON.stringify(DEF_ITEMS)),nextId:9};
+let curTab='all',editId=null,sortMode=false,toastTimer=null,saving=false;
+
+/* ── 핵심: 수량으로 상태 자동 판별 (order 필드 없음) ── */
+function getStatus(item){
+  if(item.qty<=0) return 'critical';           // 0개 → 주문필요
+  if(item.qty<=item.min) return 'critical';    // 기준 이하 → 주문필요
+  if(item.qty<=item.min*1.5) return 'low';     // 기준의 150% 이하 → 부족 임박
+  return 'ok';
+}
+function isOrderNeeded(item){ return getStatus(item)==='critical'; }
+
+function setSyncDot(state){
+  const d=document.getElementById('syncDot');
+  d.className='sync-dot'+(state==='live'?' live':state==='syncing'?' syncing':'');
+}
+function toast(msg){
+  const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
+  clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),1800);
+}
+
+async function saveToCloud(){
+  if(saving)return;saving=true;setSyncDot('syncing');
+  try{await setDoc(STORE_DOC,S);setSyncDot('live');}
+  catch(e){setSyncDot('');toast('저장 실패. 인터넷을 확인하세요.');}
+  saving=false;
+}
+
+onSnapshot(STORE_DOC,(snap)=>{
+  if(snap.exists()){S=snap.data();}
+  else{saveToCloud();}
+  setSyncDot('live');render();
+},(err)=>{setSyncDot('');console.error(err);});
+
+function getCat(id){return S.cats.find(c=>c.id===id)||{label:id,icon:'ti-box',bg:'#F1EFE8',fg:'#5F5E5A'};}
+function barColor(item){const s=getStatus(item);return s==='critical'?'#E24B4A':s==='low'?'#F5C842':'#1D9E75';}
+function barPct(item){return Math.min(100,Math.round((item.qty/(item.min*2))*100));}
+
+function badgeHTML(item){
+  const s=getStatus(item);
+  if(s==='critical') return `<span class="status-badge critical"><i class="ti ti-shopping-cart" style="font-size:12px"></i>주문 필요</span>`;
+  if(s==='low')      return `<span class="status-badge low"><i class="ti ti-alert-triangle" style="font-size:12px"></i>부족 임박</span>`;
+  return                    `<span class="status-badge ok"><i class="ti ti-circle-check" style="font-size:12px"></i>정상</span>`;
+}
+
+function renderTabs(){
+  const orderCount=S.items.filter(i=>isOrderNeeded(i)).length;
+  const tabs=[{id:'all',label:'전체'},...S.cats.map(c=>({id:c.id,label:c.label})),{id:'order',label:`🛒 주문목록${orderCount>0?' ('+orderCount+')':''}`}];
+  document.getElementById('tabBar').innerHTML=tabs.map(t=>`<div class="tab${curTab===t.id?' active':''}" onclick="window._setTab('${t.id}',this)">${t.label}</div>`).join('');
+}
+window._setTab=function(id,el){if(sortMode)return;curTab=id;document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');render();};
+
+function toggleSortMode(){
+  sortMode=!sortMode;
+  const btn=document.getElementById('sortBtn'),banner=document.getElementById('sortBanner'),sw=document.getElementById('searchWrap');
+  if(sortMode){btn.classList.add('active-sort');banner.classList.add('show');sw.style.display='none';curTab='all';document.querySelectorAll('.tab').forEach(t=>{t.classList.remove('active');if(t.textContent.startsWith('전체'))t.classList.add('active');});}
+  else{btn.classList.remove('active-sort');banner.classList.remove('show');sw.style.display='';saveToCloud();}
+  render();
+}
+window.toggleSortMode=toggleSortMode;
+
+function render(){
+  document.getElementById('storeNameLabel').textContent=S.storeName;
+  document.title=S.storeName+' 비품 관리';
+  const q=document.getElementById('searchInput').value.toLowerCase();
+  let list=S.items.filter(i=>i.name.toLowerCase().includes(q));
+  if(curTab!=='all'&&curTab!=='order') list=list.filter(i=>i.cat===curTab);
+  if(curTab==='order') list=list.filter(i=>isOrderNeeded(i));
+
+  const orderItems=S.items.filter(i=>isOrderNeeded(i));
+  const lowItems=S.items.filter(i=>getStatus(i)==='low');
+  document.getElementById('totalCount').textContent=S.items.length;
+  document.getElementById('lowCount').textContent=lowItems.length;
+  document.getElementById('orderCount').textContent=orderItems.length;
+  renderTabs();
+
+  const area=document.getElementById('listArea');
+
+  if(curTab==='order'){
+    if(!orderItems.length){area.innerHTML='<div class="empty"><i class="ti ti-circle-check" style="color:#1D9E75"></i>주문할 항목이 없어요</div>';return;}
+    area.innerHTML='<div class="order-section"><div class="section-title"><i class="ti ti-shopping-cart"></i>주문 필요 목록 ('+orderItems.length+'건)</div>'+
+      orderItems.map(i=>`<div class="order-card">
+        <div>
+          <div class="order-name">${i.name} <span style="font-weight:400;font-size:12px">[${i.cat}]</span></div>
+          <div class="order-detail">현재 ${i.qty}${i.unit} · 기준 ${i.min}${i.unit} · 보충 후 ${i.refill}${i.unit}</div>
+        </div>
+        <button class="done-btn" onclick="window._completeOrder(${i.id})">주문완료</button>
+      </div>`).join('')+'</div>';
+    return;
+  }
+
+  if(!list.length){area.innerHTML='<div class="empty"><i class="ti ti-inbox"></i>항목이 없어요</div>';return;}
+  area.innerHTML='<div class="list'+(sortMode?' sort-mode':'')+'">'+list.map(item=>{
+    const cat=getCat(item.cat);
+    const s=getStatus(item);
+    const qClass=s==='critical'?' critical':s==='low'?' low':'';
+    return `<div class="card status-${s}" data-id="${item.id}"${sortMode?' draggable="true"':''}>
+      <div class="drag-handle"><i class="ti ti-grip-vertical"></i></div>
+      <div class="cat-icon" style="background:${cat.bg}"><i class="ti ${cat.icon}" style="color:${cat.fg}"></i></div>
+      <div class="item-info">
+        <div class="item-name">${item.name}</div>
+        <div class="item-sub">${item.cat} · 기준 ${item.min}${item.unit}</div>
+        <div class="bar-track"><div class="bar-fill" style="width:${barPct(item)}%;background:${barColor(item)}"></div></div>
+      </div>
+      <div class="item-right">
+        <div class="qty-row">
+          <button class="qty-btn" onclick="window._chQty(${item.id},-1)">−</button>
+          <span class="qty-num${qClass}"> ${item.qty}<span class="qty-unit">${item.unit}</span></span>
+          <button class="qty-btn" onclick="window._chQty(${item.id},1)">+</button>
+        </div>
+        <div class="action-row">
+          ${badgeHTML(item)}
+          <button class="more-btn" onclick="window._openEdit(${item.id})"><i class="ti ti-dots-vertical"></i></button>
+        </div>
+      </div>
+    </div>`;
+  }).join('')+'</div>';
+  if(sortMode)initDrag();
+}
+
+/* ── Drag & Drop ── */
+function initDrag(){
+  const container=document.querySelector('.list');if(!container)return;
+  const cards=container.querySelectorAll('.card');let dragSrc=null;
+  cards.forEach(card=>{
+    card.addEventListener('dragstart',e=>{dragSrc=card;setTimeout(()=>card.classList.add('dragging'),0);e.dataTransfer.effectAllowed='move';});
+    card.addEventListener('dragend',()=>{card.classList.remove('dragging');container.querySelectorAll('.card').forEach(c=>c.classList.remove('drag-over'));commitOrder();});
+    card.addEventListener('dragover',e=>{e.preventDefault();if(card===dragSrc)return;container.querySelectorAll('.card').forEach(c=>c.classList.remove('drag-over'));card.classList.add('drag-over');});
+    card.addEventListener('drop',e=>{e.preventDefault();if(card===dragSrc)return;const all=[...container.querySelectorAll('.card')];const si=all.indexOf(dragSrc),di=all.indexOf(card);if(si<di)container.insertBefore(dragSrc,card.nextSibling);else container.insertBefore(dragSrc,card);container.querySelectorAll('.card').forEach(c=>c.classList.remove('drag-over'));});
+  });
+  let touchCard=null,ghost=null,touchStartY=0,touchStartX=0;
+  cards.forEach(card=>{
+    const handle=card.querySelector('.drag-handle');if(!handle)return;
+    handle.addEventListener('touchstart',e=>{
+      touchCard=card;const touch=e.touches[0];touchStartY=touch.clientY;touchStartX=touch.clientX;card.classList.add('dragging');
+      const rect=card.getBoundingClientRect();ghost=card.cloneNode(true);
+      Object.assign(ghost.style,{position:'fixed',left:rect.left+'px',top:rect.top+'px',width:rect.width+'px',opacity:'0.88',pointerEvents:'none',zIndex:'999',borderRadius:'14px',boxShadow:'0 8px 28px rgba(0,0,0,0.22)',background:'var(--bg)'});
+      document.body.appendChild(ghost);
+    },{passive:true});
+    handle.addEventListener('touchmove',e=>{
+      if(!touchCard||!ghost)return;e.preventDefault();
+      const touch=e.touches[0];const dy=touch.clientY-touchStartY;const dx=touch.clientX-touchStartX;
+      const rect=card.getBoundingClientRect();ghost.style.top=(rect.top+dy)+'px';ghost.style.left=(rect.left+dx)+'px';
+      ghost.style.display='none';const el=document.elementFromPoint(touch.clientX,touch.clientY);ghost.style.display='';
+      if(!el)return;const target=el.closest('.card');
+      if(target&&target!==touchCard){container.querySelectorAll('.card').forEach(c=>c.classList.remove('drag-over'));target.classList.add('drag-over');const tr=target.getBoundingClientRect();if(touch.clientY<tr.top+tr.height/2)container.insertBefore(touchCard,target);else container.insertBefore(touchCard,target.nextSibling);}
+    },{passive:false});
+    const endTouch=()=>{if(!touchCard)return;touchCard.classList.remove('dragging');container.querySelectorAll('.card').forEach(c=>c.classList.remove('drag-over'));if(ghost){ghost.remove();ghost=null;}touchCard=null;commitOrder();};
+    handle.addEventListener('touchend',endTouch);handle.addEventListener('touchcancel',endTouch);
+  });
+}
+function commitOrder(){
+  const cards=[...document.querySelectorAll('.list .card')];
+  const newOrder=cards.map(c=>parseInt(c.dataset.id));
+  const map=Object.fromEntries(S.items.map(i=>[i.id,i]));
+  const viewSet=new Set(newOrder);const reordered=newOrder.map(id=>map[id]).filter(Boolean);
+  let ri=0,oi=0;const others=S.items.filter(i=>!viewSet.has(i.id));const merged=[];
+  S.items.forEach(orig=>{if(viewSet.has(orig.id))merged.push(reordered[ri++]);else merged.push(others[oi++]);});
+  S.items=merged;
+}
+
+/* ── Actions ── */
+window._chQty=function(id,d){
+  const i=S.items.find(x=>x.id===id);if(!i)return;
+  const before=getStatus(i);
+  i.qty=Math.max(0,i.qty+d);
+  const after=getStatus(i);
+  if(before!=='critical'&&after==='critical') toast('⚠️ '+i.name+' 주문이 필요해요!');
+  if(before==='critical'&&after!=='critical') toast('✓ '+i.name+' 정상 수량으로 변경됐어요');
+  saveToCloud();
+};
+window._completeOrder=function(id){
+  const i=S.items.find(x=>x.id===id);if(!i)return;
+  i.qty=i.refill||10;
+  saveToCloud();toast('✓ '+i.name+' 수량 보충 완료 ('+i.qty+i.unit+')');
+};
+
+function openSheet(id){if(id==='settingsSheet')renderCatList();document.getElementById(id).classList.add('open');}
+function closeSheet(id){document.getElementById(id).classList.remove('open');document.getElementById('resetZone').style.display='none';}
+window.openSheet=openSheet;window.closeSheet=closeSheet;
+
+function openAddSheet(){
+  editId=null;
+  const sel=document.getElementById('mCat');sel.innerHTML=S.cats.map(c=>`<option value="${c.id}">${c.label}</option>`).join('');
+  document.getElementById('itemSheetTitle').textContent='비품 추가';
+  document.getElementById('mName').value='';document.getElementById('mQty').value='5';document.getElementById('mMin').value='3';document.getElementById('mRefill').value='10';document.getElementById('mUnit').value='개';
+  document.getElementById('itemDelBtn').style.display='none';openSheet('itemSheet');
+}
+window.openAddSheet=openAddSheet;
+
+window._openEdit=function(id){
+  editId=id;const i=S.items.find(x=>x.id===id);
+  const sel=document.getElementById('mCat');sel.innerHTML=S.cats.map(c=>`<option value="${c.id}">${c.label}</option>`).join('');
+  document.getElementById('itemSheetTitle').textContent='비품 수정';
+  document.getElementById('mName').value=i.name;sel.value=i.cat;document.getElementById('mQty').value=i.qty;document.getElementById('mMin').value=i.min;document.getElementById('mRefill').value=i.refill||10;document.getElementById('mUnit').value=i.unit;
+  document.getElementById('itemDelBtn').style.display='';openSheet('itemSheet');
+};
+
+window.saveItem=function(){
+  const name=document.getElementById('mName').value.trim();if(!name){alert('품목명을 입력하세요');return;}
+  const cat=document.getElementById('mCat').value,qty=parseInt(document.getElementById('mQty').value)||0,min=parseInt(document.getElementById('mMin').value)||1,refill=parseInt(document.getElementById('mRefill').value)||10,unit=document.getElementById('mUnit').value||'개';
+  if(editId){const i=S.items.find(x=>x.id===editId);Object.assign(i,{name,cat,qty,min,refill,unit});}
+  else{S.items.push({id:S.nextId++,name,cat,qty,min,refill,unit});}
+  editId=null;closeSheet('itemSheet');saveToCloud();
+};
+window.deleteItem=function(){
+  if(!confirm('삭제하시겠습니까?'))return;
+  S.items=S.items.filter(i=>i.id!==editId);editId=null;closeSheet('itemSheet');saveToCloud();
+};
+window.saveStoreName=function(){
+  const v=document.getElementById('storeInput').value.trim();if(v){S.storeName=v;saveToCloud();}closeSheet('storeSheet');
+};
+
+function renderCatList(){
+  document.getElementById('catList').innerHTML=S.cats.map(c=>`<div class="cat-item"><span><i class="ti ${c.icon}" style="font-size:15px;vertical-align:-2px;margin-right:6px;color:${c.fg}"></i>${c.label}</span><button class="cat-del-btn" onclick="window._delCat('${c.id}')">×</button></div>`).join('');
+}
+window.addCat=function(){
+  const v=document.getElementById('newCatInput').value.trim();if(!v)return;
+  if(S.cats.find(c=>c.id===v)){alert('이미 있는 카테고리예요');return;}
+  const idx=S.cats.length%CAT_STYLES.length;const st=CAT_STYLES[idx];
+  S.cats.push({id:v,label:v,icon:CAT_ICONS[idx]||'ti-tag',bg:st.bg,fg:st.fg});
+  document.getElementById('newCatInput').value='';renderCatList();saveToCloud();render();
+};
+window._delCat=function(id){
+  const cnt=S.items.filter(i=>i.cat===id).length;
+  if(cnt>0&&!confirm(`'${id}' 카테고리에 ${cnt}개 항목이 있습니다. 삭제할까요?`))return;
+  S.cats=S.cats.filter(c=>c.id!==id);renderCatList();saveToCloud();render();
+};
+window.showResetConfirm=function(){document.getElementById('resetZone').style.display='block';};
+window.hideResetConfirm=function(){document.getElementById('resetZone').style.display='none';};
+window.doReset=async function(){
+  S={storeName:'우리 매장',cats:JSON.parse(JSON.stringify(DEF_CATS)),items:JSON.parse(JSON.stringify(DEF_ITEMS)),nextId:9};
+  await saveToCloud();closeSheet('settingsSheet');curTab='all';sortMode=false;render();toast('초기화 완료');
+};
+
+document.querySelectorAll('.overlay').forEach(el=>{el.addEventListener('click',e=>{if(e.target===el){editId=null;el.classList.remove('open');}});});
+</script>
+</body>
+</html>
